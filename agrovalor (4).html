@@ -1,0 +1,2304 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AgroValor — Valorización financiera · BoldOS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg-base: #0a0e14;
+    --bg-surface: #121821;
+    --bg-elevated: #1a2230;
+    --bg-soft: #0f141c;
+    --border: #1f2937;
+    --border-soft: #18202c;
+    --border-strong: #2a3548;
+
+    --cyan: #06ffe1;
+    --cyan-dim: #04bfaa;
+    --cyan-glow: rgba(6, 255, 225, 0.15);
+    --magenta: #f85cff;
+    --magenta-dim: #c142cb;
+    --magenta-glow: rgba(248, 92, 255, 0.12);
+
+    --text: #e6eaf2;
+    --text-muted: #8a96a8;
+    --text-dim: #5a6678;
+
+    --positive: #06ffe1;
+    --negative: #ff5577;
+    --warning: #ffb547;
+
+    --font-sans: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono: "JetBrains Mono", "SF Mono", Menlo, monospace;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--font-sans);
+    background: var(--bg-base);
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.55;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    background-image:
+      radial-gradient(at 12% 8%, rgba(6, 255, 225, 0.05) 0px, transparent 50%),
+      radial-gradient(at 88% 92%, rgba(248, 92, 255, 0.04) 0px, transparent 50%);
+    background-attachment: fixed;
+  }
+
+  /* ===== HEADER ===== */
+  header {
+    background: var(--bg-surface);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+  .brand { display: flex; align-items: center; gap: 22px; }
+  .bold-logo {
+    font-family: var(--font-sans);
+    font-weight: 800;
+    font-size: 22px;
+    color: var(--text);
+    letter-spacing: -1px;
+    line-height: 1;
+    position: relative;
+    padding-right: 4px;
+  }
+  .bold-logo::after {
+    content: "";
+    position: absolute;
+    bottom: 2px;
+    right: -2px;
+    width: 6px;
+    height: 6px;
+    background: var(--cyan);
+    border-radius: 50%;
+    box-shadow: 0 0 10px var(--cyan);
+  }
+  .brand-divider {
+    width: 1px;
+    height: 30px;
+    background: var(--border-strong);
+  }
+  .brand-text .title {
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: -0.2px;
+    line-height: 1.1;
+  }
+  .brand-text .subtitle {
+    font-size: 10.5px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1.8px;
+    margin-top: 2px;
+    font-weight: 500;
+  }
+  .header-meta { display: flex; align-items: center; gap: 10px; }
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-strong);
+    color: var(--text-muted);
+    padding: 6px 12px;
+    border-radius: 100px;
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    font-weight: 500;
+  }
+  .pill .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--cyan);
+    box-shadow: 0 0 8px var(--cyan);
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  /* ===== LAYOUT ===== */
+  .layout {
+    display: grid;
+    grid-template-columns: 380px 1fr;
+    min-height: calc(100vh - 65px);
+  }
+
+  /* ===== ESTAB SELECTOR ===== */
+  .estab-selector {
+    padding: 16px 22px;
+    background: var(--bg-soft);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+  }
+  .estab-selector-label {
+    font-size: 9.5px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1.4px;
+    font-weight: 600;
+  }
+  #estab-select {
+    width: 100%;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-strong);
+    color: var(--text);
+    padding: 10px 32px 10px 12px;
+    font-family: var(--font-sans);
+    font-size: 13px;
+    font-weight: 500;
+    border-radius: 5px;
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.15s;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2306ffe1' stroke-width='2.5'><path d='M6 9l6 6 6-6'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+  }
+  #estab-select:hover { border-color: var(--cyan); }
+  #estab-select:focus { border-color: var(--cyan); box-shadow: 0 0 0 3px var(--cyan-glow); }
+
+  /* ===== SIDEBAR ===== */
+  aside {
+    background: var(--bg-surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+  }
+  #map {
+    height: 280px;
+    background: var(--bg-base);
+    border-bottom: 1px solid var(--border);
+    position: relative;
+  }
+  #map::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    box-shadow: inset 0 0 60px rgba(10, 14, 20, 0.4);
+  }
+
+  .leaflet-container { background: var(--bg-base) !important; }
+  .leaflet-control-attribution {
+    background: rgba(10, 14, 20, 0.7) !important;
+    color: var(--text-dim) !important;
+    font-size: 9px !important;
+  }
+  .leaflet-control-attribution a { color: var(--text-muted) !important; }
+
+  .estab-info {
+    padding: 22px 22px 18px;
+    border-bottom: 1px solid var(--border-soft);
+  }
+  .estab-info h3 {
+    font-weight: 700;
+    font-size: 19px;
+    margin: 0 0 4px;
+    color: var(--text);
+    letter-spacing: -0.4px;
+  }
+  .estab-info .estab-loc {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .estab-loc svg { color: var(--cyan); }
+  .estab-meta {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+  .estab-meta > div {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .estab-meta span {
+    font-size: 9.5px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1.4px;
+    font-weight: 500;
+  }
+  .estab-meta strong {
+    font-size: 13px;
+    color: var(--text);
+    font-weight: 600;
+    font-family: var(--font-mono);
+  }
+
+  .crops-detected {
+    padding: 18px 22px 20px;
+    flex: 1;
+  }
+  .crops-detected h4 {
+    margin: 0 0 14px;
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 1.4px;
+    color: var(--text-muted);
+    font-weight: 600;
+  }
+  .crop-pill {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 11px 13px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-soft);
+    border-radius: 6px;
+    margin-bottom: 7px;
+    font-size: 13px;
+    transition: border-color 0.15s;
+  }
+  .crop-pill:hover { border-color: var(--border-strong); }
+  .crop-pill .crop-name {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    font-weight: 500;
+  }
+  .crop-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    box-shadow: 0 0 8px currentColor;
+  }
+  .crop-pill .crop-ha {
+    font-family: var(--font-mono);
+    color: var(--text-muted);
+    font-size: 12px;
+  }
+  .crop-pill .crop-ha strong {
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  .sidebar-footer {
+    padding: 14px 22px 18px;
+    border-top: 1px solid var(--border-soft);
+    background: var(--bg-soft);
+    font-size: 11px;
+    color: var(--text-muted);
+    line-height: 1.6;
+  }
+  .sidebar-footer strong { color: var(--text); font-weight: 600; }
+  .sidebar-footer .pwd {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 8px;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: var(--cyan-dim);
+  }
+
+  /* ===== MAIN ===== */
+  main { padding: 0; overflow-y: auto; }
+  .tabs {
+    display: flex;
+    background: var(--bg-surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 28px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    backdrop-filter: blur(10px);
+  }
+  .tab {
+    background: none;
+    border: none;
+    padding: 16px 20px;
+    font-family: var(--font-sans);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.15s;
+    letter-spacing: 0.2px;
+  }
+  .tab:hover { color: var(--text); }
+  .tab.active {
+    color: var(--cyan);
+    border-bottom-color: var(--cyan);
+    font-weight: 600;
+  }
+
+  .tab-panel { display: none; padding: 24px 28px 60px; }
+  .tab-panel.active { display: block; animation: fadeIn 0.3s ease; }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ===== KPIs ===== */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin-bottom: 22px;
+  }
+  .kpi {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 18px 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  .kpi::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--cyan);
+    box-shadow: 0 0 8px var(--cyan);
+    opacity: 0.7;
+  }
+  .kpi-bruto::before { background: var(--cyan); box-shadow: 0 0 10px var(--cyan); }
+  .kpi-costos::before { background: var(--warning); box-shadow: 0 0 10px var(--warning); opacity: 0.6; }
+  .kpi-margen::before { background: var(--magenta); box-shadow: 0 0 10px var(--magenta); }
+  .kpi.is-negative::before { background: var(--negative); box-shadow: 0 0 10px var(--negative); }
+  .kpi.is-negative .kpi-value { color: var(--negative); }
+
+  .kpi-label {
+    display: block;
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 1.4px;
+    color: var(--text-muted);
+    font-weight: 600;
+    margin-bottom: 10px;
+  }
+  .kpi-value {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 28px;
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: -1px;
+    line-height: 1;
+  }
+  .kpi-value .currency {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-right: 5px;
+    font-weight: 500;
+  }
+  .kpi-aux {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    color: var(--text-muted);
+    margin-top: 6px;
+  }
+
+  /* ===== CARD ===== */
+  .card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-bottom: 16px;
+    overflow: hidden;
+  }
+  .card-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border-soft);
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .card-header h3 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.2px;
+  }
+  .card-meta {
+    font-size: 10.5px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+  }
+  .card-body { padding: 20px; }
+
+  /* ===== WATERFALL ===== */
+  .waterfall {
+    display: flex;
+    align-items: stretch;
+    gap: 6px;
+    padding: 14px 4px 0;
+    height: 240px;
+    border-bottom: 1px solid var(--border-soft);
+    margin-bottom: 12px;
+  }
+  .wf-bar {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    min-width: 0;
+  }
+  .wf-value {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 6px;
+    white-space: nowrap;
+    text-align: center;
+    width: 100%;
+  }
+  .wf-bar-track {
+    flex: 1;
+    width: 100%;
+    position: relative;
+    min-height: 0;
+  }
+  .wf-rect {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    border-radius: 3px 3px 0 0;
+    transition: height 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    min-height: 3px;
+  }
+  .wf-bar.wf-bruto .wf-rect {
+    background: linear-gradient(180deg, var(--cyan) 0%, var(--cyan-dim) 100%);
+    box-shadow: 0 0 20px var(--cyan-glow);
+  }
+  .wf-bar.wf-cost .wf-rect {
+    background: linear-gradient(180deg, var(--warning) 0%, #cc8a2a 100%);
+  }
+  .wf-bar.wf-neto .wf-rect {
+    background: linear-gradient(180deg, var(--magenta) 0%, var(--magenta-dim) 100%);
+    box-shadow: 0 0 20px var(--magenta-glow);
+  }
+  .wf-bar.wf-neto.is-negative .wf-rect {
+    background: linear-gradient(180deg, var(--negative) 0%, #cc3a55 100%);
+  }
+  .wf-bar.wf-cost .wf-value { color: var(--warning); }
+  .wf-bar.wf-bruto .wf-value { color: var(--cyan); }
+  .wf-bar.wf-neto .wf-value { color: var(--magenta); }
+  .wf-bar.wf-neto.is-negative .wf-value { color: var(--negative); }
+  .wf-label {
+    margin-top: 8px;
+    font-size: 10px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    text-align: center;
+    line-height: 1.3;
+    font-weight: 500;
+  }
+
+  /* ===== CROP EDITORS ===== */
+  .crop-editor {
+    border: 1px solid var(--border-soft);
+    border-radius: 6px;
+    margin-bottom: 10px;
+    overflow: hidden;
+    background: var(--bg-soft);
+  }
+  .crop-editor-header {
+    display: grid;
+    grid-template-columns: 18px 1fr auto auto auto;
+    align-items: center;
+    gap: 14px;
+    padding: 13px 16px;
+    cursor: pointer;
+    background: var(--bg-elevated);
+    border-bottom: 1px solid transparent;
+    user-select: none;
+    transition: background 0.15s;
+  }
+  .crop-editor-header:hover { background: var(--bg-surface); }
+  .crop-editor.expanded .crop-editor-header {
+    border-bottom-color: var(--border-soft);
+  }
+  .crop-chevron {
+    width: 14px;
+    height: 14px;
+    color: var(--text-muted);
+    transition: transform 0.2s;
+  }
+  .crop-editor.expanded .crop-chevron { transform: rotate(90deg); color: var(--cyan); }
+  .crop-editor-name {
+    font-weight: 600;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .crop-editor-stat {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    color: var(--text-muted);
+    min-width: 90px;
+    text-align: right;
+    line-height: 1.3;
+  }
+  .crop-editor-stat strong {
+    display: block;
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .crop-editor-body {
+    display: none;
+    padding: 18px 18px 20px;
+    background: var(--bg-soft);
+  }
+  .crop-editor.expanded .crop-editor-body {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .cost-breakdown {
+    grid-column: 1 / -1;
+    margin-top: 6px;
+    padding-top: 14px;
+    border-top: 1px dashed var(--border-soft);
+  }
+  .cost-breakdown-title {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1.3px;
+    color: var(--text-muted);
+    font-weight: 600;
+    margin-bottom: 10px;
+  }
+  .cost-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
+  }
+
+  /* ===== CONTROLS ===== */
+  .control {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .control label {
+    font-size: 10.5px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .control output {
+    font-family: var(--font-mono);
+    font-weight: 600;
+    color: var(--cyan);
+    font-size: 13px;
+  }
+  .control input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 3px;
+    border-radius: 2px;
+    background: var(--border-strong);
+    outline: none;
+    cursor: pointer;
+  }
+  .control input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--cyan);
+    cursor: pointer;
+    border: 2px solid var(--bg-base);
+    box-shadow: 0 0 8px var(--cyan-glow);
+  }
+  .control input[type="range"]::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--cyan);
+    cursor: pointer;
+    border: 2px solid var(--bg-base);
+  }
+  .control .hint {
+    font-size: 11px;
+    color: var(--text-dim);
+    font-style: italic;
+  }
+  .control input[type="number"], .control select {
+    border: 1px solid var(--border-strong);
+    border-radius: 4px;
+    padding: 7px 10px;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    background: var(--bg-elevated);
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .control input[type="number"]:focus, .control select:focus {
+    border-color: var(--cyan);
+  }
+  .control select { cursor: pointer; }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+
+  /* ===== BREAKEVEN ===== */
+  .breakeven-card {
+    border-color: var(--border-strong);
+    background: linear-gradient(135deg, var(--bg-surface) 0%, var(--bg-elevated) 100%);
+  }
+  .breakeven-card .card-header {
+    border-bottom-color: var(--border-strong);
+  }
+  .be-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0;
+  }
+  .be-cell {
+    padding: 18px 20px;
+    border-right: 1px solid var(--border-soft);
+  }
+  .be-cell:last-child { border-right: none; }
+  .be-crop-name {
+    font-size: 10.5px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1.3px;
+    font-weight: 600;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .be-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 5px 0;
+    font-size: 13px;
+  }
+  .be-row .be-label { color: var(--text-muted); font-size: 12px; }
+  .be-row .be-val {
+    font-family: var(--font-mono);
+    font-weight: 600;
+    color: var(--text);
+  }
+  .be-status {
+    margin-top: 12px;
+    padding: 8px 11px;
+    border-radius: 4px;
+    font-size: 11.5px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .be-status.safe {
+    background: rgba(6, 255, 225, 0.08);
+    color: var(--cyan);
+    border: 1px solid rgba(6, 255, 225, 0.2);
+  }
+  .be-status.tight {
+    background: rgba(255, 181, 71, 0.08);
+    color: var(--warning);
+    border: 1px solid rgba(255, 181, 71, 0.2);
+  }
+  .be-status.risk {
+    background: rgba(255, 85, 119, 0.08);
+    color: var(--negative);
+    border: 1px solid rgba(255, 85, 119, 0.2);
+  }
+  .be-status::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+    box-shadow: 0 0 6px currentColor;
+  }
+
+  /* ===== HISTORIC ===== */
+  .historic-summary {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 22px;
+  }
+  .hsum {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+  }
+  .hsum-label {
+    font-size: 10px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1.3px;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  .hsum-value {
+    font-family: var(--font-mono);
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: -0.5px;
+  }
+  .hsum-value.positive { color: var(--cyan); }
+  .hsum-value.negative { color: var(--negative); }
+  .hsum-aux {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+
+  .historic-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .historic-table thead th {
+    text-align: left;
+    padding: 12px 16px;
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 1.3px;
+    color: var(--text-muted);
+    font-weight: 600;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-soft);
+  }
+  .historic-table tbody td {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border-soft);
+    font-size: 13px;
+    font-family: var(--font-mono);
+  }
+  .historic-table tbody tr:last-child td { border-bottom: none; }
+  .historic-table tbody tr:hover { background: var(--bg-soft); }
+  .historic-table .col-campaign {
+    font-family: var(--font-sans);
+    font-weight: 600;
+    color: var(--text);
+  }
+  .historic-table .col-campaign .cmeta {
+    display: block;
+    font-size: 10.5px;
+    color: var(--text-muted);
+    font-weight: 400;
+    margin-top: 2px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .historic-table td.positive { color: var(--cyan); }
+  .historic-table td.negative { color: var(--negative); }
+  .historic-table .col-flag {
+    text-align: center;
+  }
+  .climate-badge {
+    display: inline-block;
+    font-family: var(--font-sans);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 100px;
+    border: 1px solid;
+  }
+  .climate-badge.normal { color: var(--text-muted); border-color: var(--border-strong); }
+  .climate-badge.dry { color: var(--warning); border-color: rgba(255, 181, 71, 0.3); background: rgba(255, 181, 71, 0.06); }
+  .climate-badge.severe { color: var(--negative); border-color: rgba(255, 85, 119, 0.3); background: rgba(255, 85, 119, 0.06); }
+  .climate-badge.good { color: var(--cyan); border-color: rgba(6, 255, 225, 0.3); background: rgba(6, 255, 225, 0.06); }
+
+  /* Scenario chips */
+  .scenario-bar {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+  }
+  .scenario-label {
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 1.3px;
+    color: var(--text-muted);
+    font-weight: 600;
+    margin-right: 4px;
+  }
+  .chip {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-strong);
+    color: var(--text-muted);
+    padding: 6px 12px;
+    border-radius: 100px;
+    font-size: 11.5px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: var(--font-sans);
+  }
+  .chip:hover {
+    border-color: var(--cyan);
+    color: var(--text);
+  }
+  .chip.active {
+    background: var(--cyan-glow);
+    border-color: var(--cyan);
+    color: var(--cyan);
+  }
+
+  .reset-btn {
+    background: transparent;
+    border: 1px solid var(--border-strong);
+    color: var(--text-muted);
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-family: var(--font-sans);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-weight: 500;
+  }
+  .reset-btn:hover {
+    border-color: var(--magenta);
+    color: var(--magenta);
+  }
+
+  .footnote {
+    font-size: 11px;
+    color: var(--text-dim);
+    font-style: italic;
+    margin-top: 14px;
+    line-height: 1.5;
+  }
+
+  /* Crop colors */
+  .c-soja { color: #06ffe1; }
+  .c-maiz { color: #ffb547; }
+  .c-trigo { color: #f85cff; }
+
+  /* responsive */
+  @media (max-width: 1100px) {
+    .layout { grid-template-columns: 320px 1fr; }
+    .kpi-grid, .grid-3 { grid-template-columns: 1fr 1fr; }
+    .historic-summary, .grid-4 { grid-template-columns: 1fr 1fr; }
+    .cost-grid { grid-template-columns: repeat(3, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="bold-logo">BOLD</div>
+    <div class="brand-divider"></div>
+    <div class="brand-text">
+      <div class="title">AgroValor</div>
+      <div class="subtitle">Valorización financiera por establecimiento</div>
+    </div>
+  </div>
+  <div class="header-meta">
+    <span class="pill"><span class="dot"></span>Daredevil sensa · Thot calcula</span>
+  </div>
+</header>
+
+<div class="layout">
+
+  <aside>
+    <div class="estab-selector">
+      <label class="estab-selector-label">Establecimiento de prueba</label>
+      <select id="estab-select">
+        <option value="san_joaquin">San Joaquín · Zona núcleo</option>
+        <option value="la_esmeralda">La Esmeralda · Oeste BA extensivo</option>
+        <option value="don_atilio">Don Atilio · Sudoeste triguero</option>
+        <option value="el_algarrobo">El Algarrobo · NOA (Salta)</option>
+      </select>
+    </div>
+
+    <div id="map"></div>
+
+    <div class="estab-info">
+      <h3 id="estab-name">—</h3>
+      <div class="estab-loc">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s-8-7-8-13a8 8 0 1 1 16 0c0 6-8 13-8 13z"/><circle cx="12" cy="9" r="3"/></svg>
+        <span id="estab-location">—</span>
+      </div>
+      <div class="estab-meta">
+        <div><span>Superficie</span><strong id="estab-ha">—</strong></div>
+        <div><span>Campaña</span><strong>2024/25</strong></div>
+        <div><span>Lotes</span><strong id="estab-lotes">—</strong></div>
+        <div><span>Puerto</span><strong id="estab-port">—</strong></div>
+      </div>
+    </div>
+
+    <div class="crops-detected">
+      <h4>Cultivos sensados · campaña actual</h4>
+      <div id="crops-summary"></div>
+    </div>
+
+    <div class="sidebar-footer">
+      <strong>Sensorización multitemporal</strong> sobre la georeferencia. El histórico se reconstruye con la misma capa Daredevil sobre las últimas 5 campañas.
+      <div class="pwd"><span class="dot" style="width:5px;height:5px;background:var(--cyan);border-radius:50%;box-shadow:0 0 6px var(--cyan)"></span>Capa Thot · cálculo de margen</div>
+    </div>
+  </aside>
+
+  <main>
+    <nav class="tabs">
+      <button class="tab active" data-tab="actual">Valorización campaña actual</button>
+      <button class="tab" data-tab="historico">Histórico de valor por campaña</button>
+    </nav>
+
+    <!-- ===== TAB ACTUAL ===== -->
+    <section id="tab-actual" class="tab-panel active">
+
+      <div class="scenario-bar">
+        <span class="scenario-label">Escenario</span>
+        <button class="chip active" data-scenario="base">Base</button>
+        <button class="chip" data-scenario="optimista">Optimista (+10% precio · +5% rinde)</button>
+        <button class="chip" data-scenario="estres">Estrés (-15% precio · -20% rinde)</button>
+        <button class="chip" data-scenario="custom">Custom</button>
+        <button class="reset-btn" id="reset-btn" style="margin-left:auto">Reset</button>
+      </div>
+
+      <!-- KPIs -->
+      <div class="kpi-grid">
+        <div class="kpi kpi-bruto">
+          <span class="kpi-label">Valor bruto producción</span>
+          <span class="kpi-value"><span class="currency">USD</span><span id="kpi-bruto">—</span></span>
+          <span class="kpi-aux"><span id="kpi-bruto-ha">—</span> USD/ha · 287 ha</span>
+        </div>
+        <div class="kpi kpi-costos">
+          <span class="kpi-label">Costos totales</span>
+          <span class="kpi-value"><span class="currency">USD</span><span id="kpi-costos">—</span></span>
+          <span class="kpi-aux"><span id="kpi-costos-pct">—</span>% del bruto</span>
+        </div>
+        <div class="kpi kpi-margen" id="kpi-margen-card">
+          <span class="kpi-label">Margen neto</span>
+          <span class="kpi-value"><span class="currency">USD</span><span id="kpi-margen">—</span></span>
+          <span class="kpi-aux"><span id="kpi-margen-ha">—</span> USD/ha</span>
+        </div>
+      </div>
+
+      <!-- Cascada -->
+      <div class="card">
+        <div class="card-header">
+          <h3>Cascada de margen</h3>
+          <span class="card-meta">de bruto a neto · USD totales</span>
+        </div>
+        <div class="card-body">
+          <div class="waterfall" id="waterfall"></div>
+          <div class="footnote">Cada barra muestra el saldo después de aplicar el costo correspondiente. Los costos se calculan a nivel establecimiento sobre los rindes detectados por Daredevil.</div>
+        </div>
+      </div>
+
+      <!-- Cultivos editables -->
+      <div class="card">
+        <div class="card-header">
+          <h3>Producción por cultivo</h3>
+          <span class="card-meta">rindes sensados · editables para escenarios</span>
+        </div>
+        <div class="card-body">
+          <div id="crop-editors"></div>
+        </div>
+      </div>
+
+      <!-- Logística -->
+      <div class="card">
+        <div class="card-header">
+          <h3>Logística</h3>
+          <span class="card-meta">flete chacra → acopio → puerto</span>
+        </div>
+        <div class="card-body">
+          <div class="grid-3">
+            <div class="control">
+              <label>Distancia a puerto <output id="out-port">135 km</output></label>
+              <input type="range" id="port-distance" min="40" max="800" step="5" value="135">
+              <span class="hint" id="port-hint">Puerto Rosario · auto-calculado del centroide</span>
+            </div>
+            <div class="control">
+              <label>Distancia a acopio <output id="out-acopio">18 km</output></label>
+              <input type="range" id="acopio-distance" min="3" max="60" step="1" value="18">
+              <span class="hint">Acopio cooperativo más cercano</span>
+            </div>
+            <div class="control">
+              <label>Tarifa flete <output id="out-tarifa">0.085 USD/t/km</output></label>
+              <input type="range" id="tarifa-flete" min="0.05" max="0.18" step="0.005" value="0.085">
+              <span class="hint">Referencia CATAC abril 2026</span>
+            </div>
+          </div>
+          <div class="footnote">Costo logístico total estimado: <strong id="logistic-total" style="color:var(--text)">—</strong>. Como la georeferencia ya está definida, este cálculo se actualiza automáticamente con cualquier cambio en distancia o tarifa.</div>
+        </div>
+      </div>
+
+      <!-- Carga tributaria y comercial -->
+      <div class="card">
+        <div class="card-header">
+          <h3>Carga tributaria y comercial</h3>
+          <span class="card-meta">retenciones y gastos de comercialización</span>
+        </div>
+        <div class="card-body">
+          <div class="grid-4">
+            <div class="control">
+              <label>Retención soja <output id="out-ret-soja">33%</output></label>
+              <input type="range" id="ret-soja" min="0" max="40" step="1" value="33">
+            </div>
+            <div class="control">
+              <label>Retención maíz <output id="out-ret-maiz">12%</output></label>
+              <input type="range" id="ret-maiz" min="0" max="25" step="1" value="12">
+            </div>
+            <div class="control">
+              <label>Retención trigo <output id="out-ret-trigo">12%</output></label>
+              <input type="range" id="ret-trigo" min="0" max="25" step="1" value="12">
+            </div>
+            <div class="control">
+              <label>Comercialización <output id="out-comerc">2.5%</output></label>
+              <input type="range" id="comerc" min="0" max="6" step="0.1" value="2.5">
+              <span class="hint">Corretaje + sellado + descarga</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tenencia -->
+      <div class="card">
+        <div class="card-header">
+          <h3>Esquema de tenencia</h3>
+          <span class="card-meta">propietario / arrendamiento</span>
+        </div>
+        <div class="card-body">
+          <div class="grid-2">
+            <div class="control">
+              <label>Modelo</label>
+              <select id="tenencia-model">
+                <option value="prop" selected>Propietario (sin arrendamiento)</option>
+                <option value="qq">Quintales fijos (qq soja/ha)</option>
+                <option value="pct">Porcentaje sobre producción</option>
+                <option value="usd">USD/ha fijo</option>
+              </select>
+            </div>
+            <div class="control" id="tenencia-value-control">
+              <label><span id="tenencia-value-label">Quintales soja/ha</span> <output id="out-tenencia">14 qq</output></label>
+              <input type="range" id="tenencia-value" min="0" max="30" step="1" value="14">
+            </div>
+          </div>
+          <div class="footnote" id="tenencia-footnote">Costo de arrendamiento: <strong style="color:var(--text)" id="tenencia-cost">—</strong> · equivale a <strong style="color:var(--text)" id="tenencia-pct">—</strong>% del bruto.</div>
+        </div>
+      </div>
+
+      <!-- Breakeven -->
+      <div class="card breakeven-card">
+        <div class="card-header">
+          <h3>Punto de equilibrio</h3>
+          <span class="card-meta">¿qué tan lejos está el productor de perder plata?</span>
+        </div>
+        <div class="be-grid" id="breakeven-grid"></div>
+      </div>
+
+    </section>
+
+    <!-- ===== TAB HISTORICO ===== -->
+    <section id="tab-historico" class="tab-panel">
+
+      <div class="historic-summary">
+        <div class="hsum">
+          <div class="hsum-label">Valor bruto promedio</div>
+          <div class="hsum-value" id="h-bruto-avg">—</div>
+          <div class="hsum-aux">USD/ha · 5 campañas</div>
+        </div>
+        <div class="hsum">
+          <div class="hsum-label">Margen neto promedio</div>
+          <div class="hsum-value positive" id="h-margen-avg">—</div>
+          <div class="hsum-aux">USD/ha</div>
+        </div>
+        <div class="hsum">
+          <div class="hsum-label">Mejor campaña</div>
+          <div class="hsum-value" id="h-best">—</div>
+          <div class="hsum-aux" id="h-best-name">—</div>
+        </div>
+        <div class="hsum">
+          <div class="hsum-label">Peor campaña</div>
+          <div class="hsum-value negative" id="h-worst">—</div>
+          <div class="hsum-aux" id="h-worst-name">—</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h3>Cuánto valió la producción · campaña por campaña</h3>
+          <span class="card-meta">USD totales · valor bruto vs. margen neto</span>
+        </div>
+        <div class="card-body">
+          <canvas id="historic-chart" height="100"></canvas>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h3>Detalle por campaña</h3>
+          <span class="card-meta">precios y costos del año correspondiente</span>
+        </div>
+        <table class="historic-table">
+          <thead>
+            <tr>
+              <th>Campaña</th>
+              <th class="col-flag">Clima</th>
+              <th>Rinde <span id="h-thead-yield-name">soja</span><br><small style="font-weight:400;text-transform:none;letter-spacing:0">kg/ha</small></th>
+              <th>Precio <span id="h-thead-price-name">soja</span><br><small style="font-weight:400;text-transform:none;letter-spacing:0">USD/t</small></th>
+              <th>Bruto<br><small style="font-weight:400;text-transform:none;letter-spacing:0">USD/ha</small></th>
+              <th>Costos<br><small style="font-weight:400;text-transform:none;letter-spacing:0">USD/ha</small></th>
+              <th>Margen neto<br><small style="font-weight:400;text-transform:none;letter-spacing:0">USD/ha</small></th>
+              <th>Valor producción<br><small style="font-weight:400;text-transform:none;letter-spacing:0">USD totales</small></th>
+            </tr>
+          </thead>
+          <tbody id="historic-tbody"></tbody>
+        </table>
+      </div>
+
+      <div class="footnote" style="padding:0 4px">
+        Histórico reconstruido sobre la misma georeferencia con la capa Daredevil. Los precios corresponden al promedio anual del año de cosecha. Los costos incorporan la inflación en dólares de cada campaña.
+      </div>
+
+    </section>
+
+  </main>
+
+</div>
+
+<script>
+// ============================================
+// MOCK DATA
+// ============================================
+
+// Costos, precios y retenciones son comunes por cultivo (no varían por establecimiento)
+const CROP_DEFAULTS = {
+  soja:  { name: "Soja 1ra", color: "#06ffe1", price_usd_t: 380, costs: { semilla: 88, fertilizante: 62, proteccion: 178, cosecha: 78, otros: 70 }, retention: 33 },
+  maiz:  { name: "Maíz",     color: "#ffb547", price_usd_t: 195, costs: { semilla: 220, fertilizante: 280, proteccion: 110, cosecha: 110, otros: 60 }, retention: 12 },
+  trigo: { name: "Trigo",    color: "#f85cff", price_usd_t: 230, costs: { semilla: 80, fertilizante: 175, proteccion: 90, cosecha: 70, otros: 45 }, retention: 12 }
+};
+
+// 4 establecimientos representativos: cada uno cuenta una historia distinta
+const ESTABS = [
+  {
+    id: "san_joaquin",
+    name: "Establecimiento San Joaquín",
+    location: "Pergamino, Buenos Aires",
+    region: "Zona núcleo",
+    short: "Zona núcleo · cerca de puerto",
+    hectares: 287,
+    lotes: 4,
+    centroid: [-33.857, -60.451],
+    polygon: [
+      [-33.849938, -60.459239],
+      [-33.849545, -60.442368],
+      [-33.853077, -60.441191],
+      [-33.862493, -60.440642],
+      [-33.864455, -60.441976],
+      [-33.864847, -60.455708],
+      [-33.86367, -60.460024],
+      [-33.856215, -60.460416],
+      [-33.849938, -60.459239]
+    ],
+    port_name: "Rosario",
+    port_distance_km: 130,
+    acopio_distance_km: 18,
+    crops: [
+      { key: "soja",  hectares: 168, yield_kg: 4000 },
+      { key: "maiz",  hectares: 89,  yield_kg: 10500 },
+      { key: "trigo", hectares: 30,  yield_kg: 4800 }
+    ]
+  },
+  {
+    id: "la_esmeralda",
+    name: "Establecimiento La Esmeralda",
+    location: "Pehuajó, Buenos Aires",
+    region: "Oeste · extensivo",
+    short: "Oeste BA · más lejos del puerto",
+    hectares: 580,
+    lotes: 6,
+    centroid: [-35.850, -61.900],
+    polygon: [
+      [-35.841924, -61.91723],
+      [-35.840847, -61.905384],
+      [-35.841654, -61.895693],
+      [-35.844346, -61.888154],
+      [-35.848385, -61.884924],
+      [-35.854307, -61.885462],
+      [-35.859692, -61.889231],
+      [-35.861846, -61.895693],
+      [-35.861307, -61.904846],
+      [-35.859692, -61.912384],
+      [-35.854307, -61.91723],
+      [-35.847846, -61.919114],
+      [-35.841924, -61.91723]
+    ],
+    port_name: "Bahía Blanca",
+    port_distance_km: 450,
+    acopio_distance_km: 38,
+    crops: [
+      { key: "soja",  hectares: 320, yield_kg: 3200 },
+      { key: "maiz",  hectares: 180, yield_kg: 8500 },
+      { key: "trigo", hectares: 80,  yield_kg: 3800 }
+    ]
+  },
+  {
+    id: "don_atilio",
+    name: "Establecimiento Don Atilio",
+    location: "Tres Arroyos, Buenos Aires",
+    region: "Sudoeste · triguero",
+    short: "Sudoeste BA · perfil triguero",
+    hectares: 340,
+    lotes: 5,
+    centroid: [-38.370, -60.270],
+    polygon: [
+      [-38.363808, -60.2829],
+      [-38.363034, -60.274644],
+      [-38.363292, -60.266904],
+      [-38.365098, -60.260196],
+      [-38.367678, -60.256584],
+      [-38.371806, -60.25581],
+      [-38.374902, -60.258132],
+      [-38.376966, -60.263292],
+      [-38.37774, -60.271548],
+      [-38.376966, -60.279288],
+      [-38.374128, -60.283416],
+      [-38.369484, -60.28548],
+      [-38.363808, -60.2829]
+    ],
+    port_name: "Quequén",
+    port_distance_km: 165,
+    acopio_distance_km: 22,
+    crops: [
+      { key: "soja",  hectares: 90,  yield_kg: 3400 },
+      { key: "maiz",  hectares: 60,  yield_kg: 8000 },
+      { key: "trigo", hectares: 190, yield_kg: 5200 }
+    ]
+  },
+  {
+    id: "el_algarrobo",
+    name: "Establecimiento El Algarrobo",
+    location: "Rosario de la Frontera, Salta",
+    region: "NOA",
+    short: "NOA · 1.180 km al puerto",
+    hectares: 420,
+    lotes: 3,
+    centroid: [-25.800, -64.970],
+    polygon: [
+      [-25.791548, -64.981739],
+      [-25.792018, -64.973756],
+      [-25.793896, -64.966244],
+      [-25.797183, -64.962018],
+      [-25.801409, -64.960374],
+      [-25.805635, -64.961078],
+      [-25.808452, -64.964365],
+      [-25.809861, -64.97],
+      [-25.81033, -64.976104],
+      [-25.809156, -64.981269],
+      [-25.807043, -64.984556],
+      [-25.802817, -64.98573],
+      [-25.798122, -64.984791],
+      [-25.794365, -64.983617],
+      [-25.791548, -64.981739]
+    ],
+    port_name: "Rosario",
+    port_distance_km: 1180,
+    acopio_distance_km: 25,
+    crops: [
+      { key: "soja",  hectares: 350, yield_kg: 2400 },
+      { key: "maiz",  hectares: 70,  yield_kg: 6500 }
+    ]
+  }
+];
+
+// Establecimiento activo (mutable)
+let currentEstab = ESTABS[0];
+
+// Construye el objeto state.crops a partir de un estab + CROP_DEFAULTS
+function buildCropsFromEstab(estab) {
+  const out = {};
+  estab.crops.forEach(c => {
+    out[c.key] = {
+      ...JSON.parse(JSON.stringify(CROP_DEFAULTS[c.key])),
+      hectares: c.hectares,
+      yield_kg: c.yield_kg
+    };
+  });
+  return out;
+}
+
+// State editable
+let state = {
+  crops: buildCropsFromEstab(currentEstab),
+  port_distance_km: currentEstab.port_distance_km,
+  acopio_distance_km: currentEstab.acopio_distance_km,
+  tarifa_usd_t_km: 0.085,
+  comercializacion_pct: 2.5,
+  tenencia_model: "prop",
+  tenencia_value: 14,
+  scenario: "base"
+};
+
+// Backup of defaults para reset (snapshot del estab activo)
+let STATE_DEFAULTS = JSON.parse(JSON.stringify(state));
+
+// Histórico: factor de rinde por año (relativo al rinde base del estab)
+const HISTORIC = [
+  { campaign: "2020/21", climate: { type: "dry",    label: "La Niña" },        yield_factor: 0.85, soja_price: 410, maiz_price: 220, trigo_price: 270, cost_factor: 0.92, retentions: { soja: 33, maiz: 12, trigo: 12 } },
+  { campaign: "2021/22", climate: { type: "normal", label: "Normal" },         yield_factor: 0.96, soja_price: 510, maiz_price: 270, trigo_price: 340, cost_factor: 1.05, retentions: { soja: 33, maiz: 12, trigo: 12 } },
+  { campaign: "2022/23", climate: { type: "severe", label: "Sequía severa" },  yield_factor: 0.50, soja_price: 540, maiz_price: 290, trigo_price: 320, cost_factor: 1.10, retentions: { soja: 33, maiz: 12, trigo: 12 } },
+  { campaign: "2023/24", climate: { type: "good",   label: "Buena" },          yield_factor: 0.97, soja_price: 410, maiz_price: 195, trigo_price: 240, cost_factor: 1.00, retentions: { soja: 33, maiz: 12, trigo: 12 } },
+  { campaign: "2024/25", climate: { type: "normal", label: "Normal" },         yield_factor: 1.00, soja_price: 380, maiz_price: 195, trigo_price: 230, cost_factor: 1.00, retentions: { soja: 33, maiz: 12, trigo: 12 } }
+];
+
+// ============================================
+// FORMATTERS
+// ============================================
+const fmt = {
+  usd: (n) => "$" + Math.round(n).toLocaleString('en-US'),
+  num: (n, d = 0) => Number(n).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d }),
+  pct: (n, d = 1) => Number(n).toFixed(d) + "%",
+  kg:  (n) => Math.round(n).toLocaleString('en-US'),
+  short: (n) => {
+    const abs = Math.abs(n);
+    if (abs >= 1e6) return (n / 1e6).toFixed(2) + "M";
+    if (abs >= 1e3) return (n / 1e3).toFixed(1) + "K";
+    return Math.round(n).toString();
+  }
+};
+
+// ============================================
+// CALCULATIONS
+// ============================================
+
+function computeEstab() {
+  const result = {
+    by_crop: {},
+    bruto: 0,
+    costos_directos: 0,
+    logistica: 0,
+    comercializacion: 0,
+    retenciones: 0,
+    arrendamiento: 0,
+    margen_neto: 0,
+    total_ton: 0
+  };
+
+  Object.entries(state.crops).forEach(([key, c]) => {
+    const ha = c.hectares;
+    const ton_per_ha = c.yield_kg / 1000;
+    const total_ton = ha * ton_per_ha;
+    const bruto = ha * (ton_per_ha * c.price_usd_t);
+
+    const directos_per_ha = Object.values(c.costs).reduce((a, b) => a + b, 0);
+    const directos = ha * directos_per_ha;
+
+    const logistica = total_ton * (state.port_distance_km + state.acopio_distance_km) * state.tarifa_usd_t_km;
+    const comerc = bruto * (state.comercializacion_pct / 100);
+    const retenc = bruto * (c.retention / 100);
+
+    result.by_crop[key] = {
+      ...c,
+      ton_per_ha, total_ton, bruto, directos, logistica, comerc, retenc,
+      bruto_per_ha: bruto / ha,
+      directos_per_ha
+    };
+
+    result.bruto += bruto;
+    result.costos_directos += directos;
+    result.logistica += logistica;
+    result.comercializacion += comerc;
+    result.retenciones += retenc;
+    result.total_ton += total_ton;
+  });
+
+  // Arrendamiento (sobre todo el establecimiento)
+  let arr = 0;
+  if (state.tenencia_model === "qq") {
+    // qq de soja (= 100kg) por hectárea, valuados a precio actual de soja
+    const qq_per_ha = state.tenencia_value;
+    const soja_price = state.crops.soja.price_usd_t;
+    arr = currentEstab.hectares * qq_per_ha * 0.1 * soja_price;
+  } else if (state.tenencia_model === "pct") {
+    arr = result.bruto * (state.tenencia_value / 100);
+  } else if (state.tenencia_model === "usd") {
+    arr = currentEstab.hectares * state.tenencia_value;
+  }
+  result.arrendamiento = arr;
+
+  result.costos_totales = result.costos_directos + result.logistica + result.comercializacion + result.retenciones + result.arrendamiento;
+  result.margen_neto = result.bruto - result.costos_totales;
+  result.margen_per_ha = result.margen_neto / currentEstab.hectares;
+  result.bruto_per_ha = result.bruto / currentEstab.hectares;
+
+  return result;
+}
+
+// Breakeven por cultivo (asume costos prorateados por cultivo)
+function computeBreakeven(comp) {
+  const result = {};
+  Object.entries(comp.by_crop).forEach(([key, c]) => {
+    // Costos totales asignables al cultivo
+    const directos = c.directos;
+    const logistica = c.logistica;
+    const comerc = c.comerc;
+    const retenc = c.retenc;
+
+    // Arrendamiento prorrateado por hectárea
+    const arr_per_ha = comp.arrendamiento / currentEstab.hectares;
+    const arr = arr_per_ha * c.hectares;
+
+    const cost_total = directos + logistica + comerc + retenc + arr;
+    const cost_per_ha = cost_total / c.hectares;
+
+    // Rinde mínimo: precio actual menos retenciones-comercialización aplicado al rinde
+    // Bruto - cost_total = 0  =>  rinde * precio_neto * ha = costos
+    const precio_efectivo = c.price_usd_t * (1 - c.retention / 100) * (1 - state.comercializacion_pct / 100);
+    const flete_per_ton = (state.port_distance_km + state.acopio_distance_km) * state.tarifa_usd_t_km;
+    const precio_neto_t = precio_efectivo - flete_per_ton;
+    const rinde_minimo_t = (directos / c.hectares + arr_per_ha) / precio_neto_t;
+    const rinde_minimo_kg = rinde_minimo_t * 1000;
+
+    // Precio mínimo: dado el rinde actual, qué precio mínimo necesita
+    const ton_per_ha = c.ton_per_ha;
+    const precio_minimo_t = ((directos / c.hectares + arr_per_ha) / ton_per_ha + flete_per_ton) / ((1 - c.retention / 100) * (1 - state.comercializacion_pct / 100));
+
+    const margen_actual = c.bruto - cost_total;
+    const margen_per_ha = margen_actual / c.hectares;
+
+    // Holgura
+    const yield_buffer = ((c.yield_kg - rinde_minimo_kg) / c.yield_kg) * 100;
+    const price_buffer = ((c.price_usd_t - precio_minimo_t) / c.price_usd_t) * 100;
+
+    let status = "safe";
+    if (yield_buffer < 0 || price_buffer < 0) status = "risk";
+    else if (yield_buffer < 20 || price_buffer < 15) status = "tight";
+
+    result[key] = {
+      name: c.name,
+      color: c.color,
+      yield_actual: c.yield_kg,
+      yield_minimo: rinde_minimo_kg,
+      price_actual: c.price_usd_t,
+      price_minimo: precio_minimo_t,
+      margen_per_ha,
+      cost_per_ha,
+      yield_buffer,
+      price_buffer,
+      status
+    };
+  });
+  return result;
+}
+
+// ============================================
+// RENDER: SIDEBAR CROPS
+// ============================================
+function renderCropsSummary() {
+  const html = Object.values(state.crops).map(c => `
+    <div class="crop-pill">
+      <div class="crop-name">
+        <span class="crop-dot" style="background:${c.color};color:${c.color}"></span>
+        ${c.name}
+      </div>
+      <div class="crop-ha"><strong>${c.hectares}</strong> ha · ${(c.hectares / currentEstab.hectares * 100).toFixed(0)}%</div>
+    </div>
+  `).join("");
+  document.getElementById("crops-summary").innerHTML = html;
+}
+
+// ============================================
+// RENDER: KPIs
+// ============================================
+function renderKPIs(comp) {
+  document.getElementById("kpi-bruto").textContent = fmt.short(comp.bruto);
+  document.getElementById("kpi-bruto-ha").textContent = fmt.usd(comp.bruto_per_ha).replace("$", "");
+  document.getElementById("kpi-costos").textContent = fmt.short(comp.costos_totales);
+  document.getElementById("kpi-costos-pct").textContent = fmt.num(comp.costos_totales / comp.bruto * 100, 1);
+  document.getElementById("kpi-margen").textContent = fmt.short(comp.margen_neto);
+  document.getElementById("kpi-margen-ha").textContent = fmt.usd(comp.margen_per_ha).replace("$", "");
+
+  const card = document.getElementById("kpi-margen-card");
+  if (comp.margen_neto < 0) card.classList.add("is-negative");
+  else card.classList.remove("is-negative");
+}
+
+// ============================================
+// RENDER: WATERFALL
+// ============================================
+function renderWaterfall(comp) {
+  const max = comp.bruto;
+  const stages = [
+    { label: "Bruto",          value: comp.bruto,                                                                                  type: "bruto" },
+    { label: "Costos directos", value: comp.bruto - comp.costos_directos,                                                          type: "cost",  delta: -comp.costos_directos },
+    { label: "Logística",       value: comp.bruto - comp.costos_directos - comp.logistica,                                         type: "cost",  delta: -comp.logistica },
+    { label: "Comercialización",value: comp.bruto - comp.costos_directos - comp.logistica - comp.comercializacion,                 type: "cost",  delta: -comp.comercializacion },
+    { label: "Retenciones",     value: comp.bruto - comp.costos_directos - comp.logistica - comp.comercializacion - comp.retenciones, type: "cost", delta: -comp.retenciones },
+    { label: "Arrendamiento",   value: comp.margen_neto,                                                                            type: "cost",  delta: -comp.arrendamiento },
+    { label: "Margen neto",     value: comp.margen_neto,                                                                            type: "neto" }
+  ];
+
+  const html = stages.map(s => {
+    const isNeg = s.value < 0;
+    const heightPct = Math.max(2, Math.min(100, Math.abs(s.value) / max * 100));
+    const valueDisplay = s.delta !== undefined
+      ? `−${fmt.short(Math.abs(s.delta))}`
+      : (isNeg ? `−${fmt.short(Math.abs(s.value))}` : fmt.short(s.value));
+    const negCls = isNeg && s.type === "neto" ? "is-negative" : "";
+    return `
+      <div class="wf-bar wf-${s.type} ${negCls}">
+        <div class="wf-value">${valueDisplay}</div>
+        <div class="wf-bar-track">
+          <div class="wf-rect" style="height:${heightPct}%"></div>
+        </div>
+        <div class="wf-label">${s.label}</div>
+      </div>
+    `;
+  }).join("");
+
+  document.getElementById("waterfall").innerHTML = html;
+}
+
+// ============================================
+// RENDER: CROP EDITORS
+// ============================================
+function renderCropEditors() {
+  const html = Object.entries(state.crops).map(([key, c]) => {
+    const ton_per_ha = c.yield_kg / 1000;
+    const total_ton = c.hectares * ton_per_ha;
+    const bruto_per_ha = ton_per_ha * c.price_usd_t;
+    const total_costs = Object.values(c.costs).reduce((a, b) => a + b, 0);
+
+    return `
+      <div class="crop-editor" data-crop="${key}">
+        <div class="crop-editor-header" onclick="toggleCropEditor('${key}')">
+          <svg class="crop-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
+          <div class="crop-editor-name">
+            <span class="crop-dot" style="background:${c.color};color:${c.color}"></span>
+            ${c.name} · ${c.hectares} ha
+          </div>
+          <div class="crop-editor-stat"><strong>${fmt.kg(c.yield_kg)}</strong>kg/ha</div>
+          <div class="crop-editor-stat"><strong>$${c.price_usd_t}</strong>USD/t</div>
+          <div class="crop-editor-stat"><strong>${fmt.usd(bruto_per_ha)}</strong>USD/ha bruto</div>
+        </div>
+        <div class="crop-editor-body">
+          <div class="control">
+            <label>Rinde estimado <output id="out-yield-${key}">${fmt.kg(c.yield_kg)} kg/ha</output></label>
+            <input type="range" data-crop="${key}" data-field="yield_kg" min="500" max="${key === 'maiz' ? 14000 : 6500}" step="50" value="${c.yield_kg}">
+            <span class="hint">Sensado por Daredevil · ajustable para escenarios</span>
+          </div>
+          <div class="control">
+            <label>Precio CBOT <output id="out-price-${key}">$${c.price_usd_t} USD/t</output></label>
+            <input type="range" data-crop="${key}" data-field="price_usd_t" min="100" max="700" step="5" value="${c.price_usd_t}">
+            <span class="hint">Spot internacional</span>
+          </div>
+          <div class="cost-breakdown">
+            <div class="cost-breakdown-title">Costos directos · USD/ha · total ${fmt.usd(total_costs)}</div>
+            <div class="cost-grid">
+              ${Object.entries(c.costs).map(([cKey, cVal]) => `
+                <div class="control">
+                  <label style="text-transform:capitalize">${cKey} <output id="out-cost-${key}-${cKey}">$${cVal}</output></label>
+                  <input type="range" data-crop="${key}" data-cost="${cKey}" min="0" max="500" step="5" value="${cVal}">
+                </div>
+              `).join("")}
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  document.getElementById("crop-editors").innerHTML = html;
+
+  // Re-bind sliders
+  document.querySelectorAll('#crop-editors input[type="range"]').forEach(input => {
+    input.addEventListener('input', handleCropSliderChange);
+  });
+}
+
+window.toggleCropEditor = function(key) {
+  const el = document.querySelector(`.crop-editor[data-crop="${key}"]`);
+  el.classList.toggle("expanded");
+};
+
+function handleCropSliderChange(e) {
+  const key = e.target.dataset.crop;
+  const field = e.target.dataset.field;
+  const cost = e.target.dataset.cost;
+  const v = parseFloat(e.target.value);
+
+  if (cost) {
+    state.crops[key].costs[cost] = v;
+    document.getElementById(`out-cost-${key}-${cost}`).textContent = `$${v}`;
+  } else if (field === "yield_kg") {
+    state.crops[key].yield_kg = v;
+    document.getElementById(`out-yield-${key}`).textContent = `${fmt.kg(v)} kg/ha`;
+  } else if (field === "price_usd_t") {
+    state.crops[key].price_usd_t = v;
+    document.getElementById(`out-price-${key}`).textContent = `$${v} USD/t`;
+  }
+  state.scenario = "custom";
+  document.querySelectorAll('.chip').forEach(c => c.classList.toggle('active', c.dataset.scenario === 'custom'));
+  recompute();
+}
+
+// ============================================
+// RENDER: BREAKEVEN
+// ============================================
+function renderBreakeven(be) {
+  const html = Object.entries(be).map(([key, b]) => {
+    const statusLabel = {
+      safe: `Holgado · margen de ${fmt.pct(Math.min(b.yield_buffer, b.price_buffer))} sobre rinde / precio`,
+      tight: `Ajustado · margen <20% en rinde o precio`,
+      risk: `En rojo · breakeven por encima del rinde o precio actual`
+    }[b.status];
+
+    const needs_recover = b.status === "risk";
+
+    return `
+      <div class="be-cell">
+        <div class="be-crop-name">
+          <span class="crop-dot" style="background:${b.color};color:${b.color}"></span>${b.name}
+        </div>
+        <div class="be-row">
+          <span class="be-label">Rinde mínimo</span>
+          <span class="be-val">${fmt.kg(b.yield_minimo)} kg/ha</span>
+        </div>
+        <div class="be-row">
+          <span class="be-label">Rinde actual</span>
+          <span class="be-val">${fmt.kg(b.yield_actual)} kg/ha</span>
+        </div>
+        <div class="be-row">
+          <span class="be-label">Precio mínimo</span>
+          <span class="be-val">$${fmt.num(b.price_minimo, 0)} USD/t</span>
+        </div>
+        <div class="be-row">
+          <span class="be-label">Precio actual</span>
+          <span class="be-val">$${fmt.num(b.price_actual, 0)} USD/t</span>
+        </div>
+        <div class="be-row">
+          <span class="be-label">Margen actual</span>
+          <span class="be-val" style="color:${b.margen_per_ha >= 0 ? 'var(--cyan)' : 'var(--negative)'}">${b.margen_per_ha >= 0 ? '+' : ''}${fmt.usd(b.margen_per_ha)}/ha</span>
+        </div>
+        <div class="be-status ${b.status}">${statusLabel}</div>
+      </div>
+    `;
+  }).join("");
+
+  document.getElementById("breakeven-grid").innerHTML = html;
+}
+
+// ============================================
+// RENDER: LOGISTICS / COMMERCIAL TOTALS
+// ============================================
+function renderLogisticsTotals(comp) {
+  document.getElementById("logistic-total").textContent = fmt.usd(comp.logistica) + " USD totales · " + fmt.usd(comp.logistica / currentEstab.hectares) + "/ha";
+}
+
+function renderTenenciaTotals(comp) {
+  const pct = comp.bruto > 0 ? (comp.arrendamiento / comp.bruto * 100) : 0;
+  document.getElementById("tenencia-cost").textContent = fmt.usd(comp.arrendamiento) + " USD totales · " + fmt.usd(comp.arrendamiento / currentEstab.hectares) + "/ha";
+  document.getElementById("tenencia-pct").textContent = fmt.num(pct, 1);
+}
+
+// ============================================
+// SCENARIO PRESETS
+// ============================================
+function applyScenario(name) {
+  state.scenario = name;
+
+  // Yields base del estab activo
+  const baseYields = {};
+  currentEstab.crops.forEach(c => { baseYields[c.key] = c.yield_kg; });
+
+  if (name === "base") {
+    Object.keys(state.crops).forEach(k => {
+      state.crops[k].yield_kg = baseYields[k];
+      state.crops[k].price_usd_t = CROP_DEFAULTS[k].price_usd_t;
+    });
+  } else if (name === "optimista") {
+    Object.keys(state.crops).forEach(k => {
+      state.crops[k].yield_kg = Math.round(baseYields[k] * 1.05);
+      state.crops[k].price_usd_t = Math.round(CROP_DEFAULTS[k].price_usd_t * 1.10);
+    });
+  } else if (name === "estres") {
+    Object.keys(state.crops).forEach(k => {
+      state.crops[k].yield_kg = Math.round(baseYields[k] * 0.80);
+      state.crops[k].price_usd_t = Math.round(CROP_DEFAULTS[k].price_usd_t * 0.85);
+    });
+  }
+
+  document.querySelectorAll('.chip').forEach(c => c.classList.toggle('active', c.dataset.scenario === name));
+  renderCropEditors();
+  recompute();
+}
+
+function resetAll() {
+  state = JSON.parse(JSON.stringify(STATE_DEFAULTS));
+
+  // Re-set all controls
+  document.getElementById("port-distance").value = state.port_distance_km;
+  document.getElementById("out-port").textContent = state.port_distance_km + " km";
+
+  document.getElementById("acopio-distance").value = state.acopio_distance_km;
+  document.getElementById("out-acopio").textContent = state.acopio_distance_km + " km";
+
+  document.getElementById("tarifa-flete").value = state.tarifa_usd_t_km;
+  document.getElementById("out-tarifa").textContent = state.tarifa_usd_t_km + " USD/t/km";
+
+  ["soja", "maiz", "trigo"].forEach(k => {
+    document.getElementById(`ret-${k}`).value = state.crops[k].retention;
+    document.getElementById(`out-ret-${k}`).textContent = state.crops[k].retention + "%";
+  });
+
+  document.getElementById("comerc").value = state.comercializacion_pct;
+  document.getElementById("out-comerc").textContent = state.comercializacion_pct + "%";
+
+  document.getElementById("tenencia-model").value = state.tenencia_model;
+  document.getElementById("tenencia-value").value = state.tenencia_value;
+  updateTenenciaUI();
+
+  document.querySelectorAll('.chip').forEach(c => c.classList.toggle('active', c.dataset.scenario === 'base'));
+
+  renderCropEditors();
+  recompute();
+}
+
+// ============================================
+// HISTORIC TAB
+// ============================================
+function computeHistoric() {
+  const stableTarifa = state.tarifa_usd_t_km;
+  const stableComerc = state.comercializacion_pct / 100;
+  const stableArrPerHaModel = state.tenencia_model;
+  const stableArrValue = state.tenencia_value;
+
+  // Yields base y hectáreas del estab activo
+  const estabCropsByKey = {};
+  currentEstab.crops.forEach(c => { estabCropsByKey[c.key] = c; });
+  const cropKeys = Object.keys(estabCropsByKey);
+
+  return HISTORIC.map(h => {
+    let bruto = 0, directos = 0, logistica = 0, comerc = 0, retenc = 0, total_ton = 0;
+    let primarySojaPrice = h.soja_price; // siempre usamos soja_price para el qq de arrendamiento
+
+    cropKeys.forEach(k => {
+      const ec = estabCropsByKey[k];
+      const ha = ec.hectares;
+      // El rinde histórico de cada cultivo escalado por el factor climático del año
+      const yld = ec.yield_kg * h.yield_factor;
+      const prc = h[`${k}_price`];
+      const ret = h.retentions[k];
+
+      const tons = ha * yld / 1000;
+      const b = tons * prc;
+      const d = ha * Object.values(CROP_DEFAULTS[k].costs).reduce((a, b) => a + b, 0) * h.cost_factor;
+      const l = tons * (state.port_distance_km + state.acopio_distance_km) * stableTarifa;
+      const c = b * stableComerc;
+      const r = b * (ret / 100);
+
+      bruto += b; directos += d; logistica += l; comerc += c; retenc += r;
+      total_ton += tons;
+    });
+
+    let arr = 0;
+    if (stableArrPerHaModel === "qq") {
+      arr = currentEstab.hectares * stableArrValue * 0.1 * primarySojaPrice;
+    } else if (stableArrPerHaModel === "pct") {
+      arr = bruto * (stableArrValue / 100);
+    } else if (stableArrPerHaModel === "usd") {
+      arr = currentEstab.hectares * stableArrValue;
+    }
+
+    const costos_total = directos + logistica + comerc + retenc + arr;
+    const margen_neto = bruto - costos_total;
+
+    // Rinde y precio de soja del año (para la tabla); si no hay soja, usamos el primer cultivo
+    const primaryKey = cropKeys.includes("soja") ? "soja" : cropKeys[0];
+    const primaryYield = estabCropsByKey[primaryKey].yield_kg * h.yield_factor;
+    const primaryPrice = h[`${primaryKey}_price`];
+    const primaryName = CROP_DEFAULTS[primaryKey].name;
+
+    return {
+      ...h,
+      bruto,
+      bruto_per_ha: bruto / currentEstab.hectares,
+      costos_total,
+      costos_per_ha: costos_total / currentEstab.hectares,
+      margen_neto,
+      margen_per_ha: margen_neto / currentEstab.hectares,
+      primaryKey, primaryYield, primaryPrice, primaryName
+    };
+  });
+}
+
+let historicChart = null;
+
+function renderHistoric() {
+  const data = computeHistoric();
+
+  // Summary
+  const avgBruto = data.reduce((a, h) => a + h.bruto_per_ha, 0) / data.length;
+  const avgMargen = data.reduce((a, h) => a + h.margen_per_ha, 0) / data.length;
+  const best = data.reduce((a, h) => h.margen_neto > a.margen_neto ? h : a);
+  const worst = data.reduce((a, h) => h.margen_neto < a.margen_neto ? h : a);
+
+  document.getElementById("h-bruto-avg").textContent = fmt.usd(avgBruto);
+  document.getElementById("h-margen-avg").textContent = fmt.usd(avgMargen);
+  document.getElementById("h-best").textContent = fmt.short(best.margen_neto);
+  document.getElementById("h-best-name").textContent = best.campaign + " · " + best.climate.label;
+  document.getElementById("h-worst").textContent = (worst.margen_neto < 0 ? "−" : "") + fmt.short(Math.abs(worst.margen_neto));
+  document.getElementById("h-worst-name").textContent = worst.campaign + " · " + worst.climate.label;
+
+  // Update dynamic table headers with primary crop name
+  if (data.length > 0) {
+    const pname = data[0].primaryName.toLowerCase().replace(/\s+1ra/, '');
+    document.getElementById("h-thead-yield-name").textContent = pname;
+    document.getElementById("h-thead-price-name").textContent = pname;
+  }
+
+  // Table
+  const tbody = data.map(h => {
+    const climateClass = h.climate.type;
+    const margenCls = h.margen_per_ha >= 0 ? "positive" : "negative";
+    return `
+      <tr>
+        <td class="col-campaign">${h.campaign}<span class="cmeta">${currentEstab.region}</span></td>
+        <td class="col-flag"><span class="climate-badge ${climateClass}">${h.climate.label}</span></td>
+        <td>${fmt.kg(h.primaryYield)}</td>
+        <td>$${h.primaryPrice}</td>
+        <td>${fmt.usd(h.bruto_per_ha)}</td>
+        <td>${fmt.usd(h.costos_per_ha)}</td>
+        <td class="${margenCls}">${h.margen_per_ha >= 0 ? '+' : '−'}${fmt.usd(Math.abs(h.margen_per_ha))}</td>
+        <td>${h.margen_neto >= 0 ? '+' : '−'}${fmt.short(Math.abs(h.margen_neto))}</td>
+      </tr>
+    `;
+  }).join("");
+  document.getElementById("historic-tbody").innerHTML = tbody;
+
+  // Chart
+  const ctx = document.getElementById("historic-chart").getContext("2d");
+  if (historicChart) historicChart.destroy();
+
+  historicChart = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels: data.map(h => h.campaign),
+      datasets: [
+        {
+          label: "Valor bruto",
+          data: data.map(h => Math.round(h.bruto)),
+          backgroundColor: "rgba(6, 255, 225, 0.25)",
+          borderColor: "#06ffe1",
+          borderWidth: 1.5,
+          borderRadius: 4
+        },
+        {
+          label: "Margen neto",
+          data: data.map(h => Math.round(h.margen_neto)),
+          backgroundColor: data.map(h => h.margen_neto >= 0 ? "rgba(248, 92, 255, 0.6)" : "rgba(255, 85, 119, 0.6)"),
+          borderColor: data.map(h => h.margen_neto >= 0 ? "#f85cff" : "#ff5577"),
+          borderWidth: 1.5,
+          borderRadius: 4
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: "top",
+          align: "end",
+          labels: {
+            color: "#8a96a8",
+            font: { family: "Plus Jakarta Sans", size: 11, weight: "500" },
+            usePointStyle: true,
+            pointStyle: "rectRounded",
+            padding: 16
+          }
+        },
+        tooltip: {
+          backgroundColor: "#0a0e14",
+          borderColor: "#2a3548",
+          borderWidth: 1,
+          titleColor: "#e6eaf2",
+          bodyColor: "#e6eaf2",
+          titleFont: { family: "Plus Jakarta Sans", weight: "600" },
+          bodyFont: { family: "JetBrains Mono", size: 12 },
+          padding: 10,
+          callbacks: {
+            label: (ctx) => `${ctx.dataset.label}: USD ${Math.round(ctx.raw).toLocaleString('en-US')}`
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { display: false },
+          ticks: { color: "#8a96a8", font: { family: "JetBrains Mono", size: 11 } }
+        },
+        y: {
+          grid: { color: "rgba(31, 41, 55, 0.6)" },
+          ticks: {
+            color: "#8a96a8",
+            font: { family: "JetBrains Mono", size: 11 },
+            callback: (v) => "$" + (v / 1000).toFixed(0) + "K"
+          }
+        }
+      }
+    }
+  });
+}
+
+// ============================================
+// TENENCIA UI
+// ============================================
+function updateTenenciaUI() {
+  const model = state.tenencia_model;
+  const labelEl = document.getElementById("tenencia-value-label");
+  const sliderEl = document.getElementById("tenencia-value");
+  const outEl = document.getElementById("out-tenencia");
+  const controlEl = document.getElementById("tenencia-value-control");
+
+  if (model === "prop") {
+    controlEl.style.opacity = "0.4";
+    controlEl.style.pointerEvents = "none";
+    sliderEl.value = 0;
+    state.tenencia_value = 0;
+    outEl.textContent = "—";
+  } else {
+    controlEl.style.opacity = "1";
+    controlEl.style.pointerEvents = "auto";
+  }
+
+  if (model === "qq") {
+    labelEl.textContent = "Quintales soja/ha";
+    sliderEl.min = 0; sliderEl.max = 30; sliderEl.step = 1;
+    if (state.tenencia_value > 30) state.tenencia_value = 14;
+    sliderEl.value = state.tenencia_value;
+    outEl.textContent = state.tenencia_value + " qq";
+  } else if (model === "pct") {
+    labelEl.textContent = "% sobre producción";
+    sliderEl.min = 0; sliderEl.max = 50; sliderEl.step = 1;
+    if (state.tenencia_value > 50 || state.tenencia_value === 14) state.tenencia_value = 28;
+    sliderEl.value = state.tenencia_value;
+    outEl.textContent = state.tenencia_value + "%";
+  } else if (model === "usd") {
+    labelEl.textContent = "USD/ha fijo";
+    sliderEl.min = 0; sliderEl.max = 800; sliderEl.step = 10;
+    if (state.tenencia_value < 50) state.tenencia_value = 350;
+    sliderEl.value = state.tenencia_value;
+    outEl.textContent = "$" + state.tenencia_value;
+  }
+}
+
+// ============================================
+// RECOMPUTE / ORCHESTRATOR
+// ============================================
+function recompute() {
+  const comp = computeEstab();
+  const be = computeBreakeven(comp);
+  renderKPIs(comp);
+  renderWaterfall(comp);
+  renderBreakeven(be);
+  renderLogisticsTotals(comp);
+  renderTenenciaTotals(comp);
+}
+
+// ============================================
+// MAP
+// ============================================
+let mapInstance = null;
+let mapPolygon = null;
+let mapMarker = null;
+
+function initMap() {
+  mapInstance = L.map("map", {
+    zoomControl: false,
+    attributionControl: true,
+    scrollWheelZoom: false
+  }).setView(currentEstab.centroid, 13);
+
+  L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png", {
+    attribution: '&copy; OSM &copy; CARTO',
+    subdomains: "abcd",
+    maxZoom: 19,
+    opacity: 0.85
+  }).addTo(mapInstance);
+
+  // Capa de relieve sutil para que se vean ríos, sierras y cambios de elevación
+  L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/Elevation/World_Hillshade/MapServer/tile/{z}/{y}/{x}", {
+    maxZoom: 19,
+    opacity: 0.22,
+    attribution: ""
+  }).addTo(mapInstance);
+
+  // Labels encima de todo para que se lean nombres de ciudades y rutas
+  L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png", {
+    attribution: "",
+    subdomains: "abcd",
+    maxZoom: 19,
+    pane: "shadowPane"
+  }).addTo(mapInstance);
+
+  L.control.zoom({ position: "topright" }).addTo(mapInstance);
+
+  drawEstabOnMap();
+}
+
+function drawEstabOnMap() {
+  if (mapPolygon) mapInstance.removeLayer(mapPolygon);
+  if (mapMarker) mapInstance.removeLayer(mapMarker);
+
+  // Polígono con estilo más legible sobre el nuevo basemap
+  mapPolygon = L.polygon(currentEstab.polygon, {
+    color: "#06ffe1",
+    weight: 2.5,
+    fillColor: "#06ffe1",
+    fillOpacity: 0.18,
+    opacity: 0.95,
+    lineJoin: "round",
+    smoothFactor: 0.5
+  }).addTo(mapInstance);
+
+  // Marcador del centroide con halo magenta
+  mapMarker = L.circleMarker(currentEstab.centroid, {
+    radius: 5,
+    color: "#f85cff",
+    fillColor: "#f85cff",
+    fillOpacity: 1,
+    weight: 2,
+    opacity: 1
+  }).addTo(mapInstance);
+
+  // Halo glow más amplio (segundo círculo más grande y transparente)
+  L.circleMarker(currentEstab.centroid, {
+    radius: 12,
+    color: "#f85cff",
+    fillColor: "#f85cff",
+    fillOpacity: 0.15,
+    weight: 1,
+    opacity: 0.4,
+    interactive: false
+  }).addTo(mapInstance);
+
+  // Ajustar el bounds al polígono para que se vea entero con padding
+  const bounds = mapPolygon.getBounds();
+  mapInstance.flyToBounds(bounds, { padding: [40, 40], duration: 0.7, maxZoom: 14 });
+}
+
+// ============================================
+// RENDER: ESTAB INFO (sidebar)
+// ============================================
+function renderEstabInfo() {
+  document.getElementById("estab-name").textContent = currentEstab.name;
+  document.getElementById("estab-location").textContent = currentEstab.location + " · Argentina";
+  document.getElementById("estab-ha").textContent = currentEstab.hectares + " ha";
+  document.getElementById("estab-lotes").textContent = currentEstab.lotes + " lotes";
+  document.getElementById("estab-port").textContent = currentEstab.port_name;
+}
+
+// ============================================
+// SWITCH ESTAB
+// ============================================
+function switchEstab(id) {
+  const estab = ESTABS.find(e => e.id === id);
+  if (!estab) return;
+
+  currentEstab = estab;
+
+  // Reconstruir state desde cero con los defaults del nuevo estab
+  state.crops = buildCropsFromEstab(estab);
+  state.port_distance_km = estab.port_distance_km;
+  state.acopio_distance_km = estab.acopio_distance_km;
+  state.tarifa_usd_t_km = 0.085;
+  state.comercializacion_pct = 2.5;
+  state.tenencia_model = "prop";
+  state.tenencia_value = 14;
+  state.scenario = "base";
+
+  STATE_DEFAULTS = JSON.parse(JSON.stringify(state));
+
+  // Sincronizar controles de UI con el nuevo state
+  document.getElementById("port-distance").value = state.port_distance_km;
+  document.getElementById("out-port").textContent = state.port_distance_km + " km";
+  document.getElementById("acopio-distance").value = state.acopio_distance_km;
+  document.getElementById("out-acopio").textContent = state.acopio_distance_km + " km";
+  document.getElementById("tarifa-flete").value = state.tarifa_usd_t_km;
+  document.getElementById("out-tarifa").textContent = state.tarifa_usd_t_km.toFixed(3) + " USD/t/km";
+  document.getElementById("comerc").value = state.comercializacion_pct;
+  document.getElementById("out-comerc").textContent = state.comercializacion_pct.toFixed(1) + "%";
+
+  // Retenciones: solo updatea las visibles (puede ser que algunos cultivos no estén en este estab)
+  ["soja", "maiz", "trigo"].forEach(k => {
+    const slider = document.getElementById(`ret-${k}`);
+    const out = document.getElementById(`out-ret-${k}`);
+    if (slider && out) {
+      slider.value = CROP_DEFAULTS[k].retention;
+      out.textContent = CROP_DEFAULTS[k].retention + "%";
+    }
+  });
+
+  document.getElementById("tenencia-model").value = state.tenencia_model;
+  updateTenenciaUI();
+
+  // Actualizar hint del puerto con el nuevo nombre
+  const portHint = document.getElementById("port-hint");
+  if (portHint) portHint.textContent = `Puerto ${currentEstab.port_name} · auto-calculado del centroide`;
+
+  // Reset chips de escenario
+  document.querySelectorAll('.chip').forEach(c => c.classList.toggle('active', c.dataset.scenario === 'base'));
+
+  renderEstabInfo();
+  renderCropsSummary();
+  renderCropEditors();
+  drawEstabOnMap();
+  recompute();
+
+  // Si la pestaña de histórico está activa, refrescarla
+  const historicActive = document.getElementById("tab-historico").classList.contains("active");
+  if (historicActive) renderHistoric();
+}
+
+// ============================================
+// EVENT BINDINGS
+// ============================================
+function bindEvents() {
+  // Tabs
+  document.querySelectorAll(".tab").forEach(t => {
+    t.addEventListener("click", () => {
+      document.querySelectorAll(".tab").forEach(x => x.classList.remove("active"));
+      document.querySelectorAll(".tab-panel").forEach(x => x.classList.remove("active"));
+      t.classList.add("active");
+      document.getElementById("tab-" + t.dataset.tab).classList.add("active");
+      if (t.dataset.tab === "historico") renderHistoric();
+    });
+  });
+
+  // Scenario chips
+  document.querySelectorAll(".chip").forEach(c => {
+    c.addEventListener("click", () => {
+      if (c.dataset.scenario !== "custom") applyScenario(c.dataset.scenario);
+    });
+  });
+
+  // Reset
+  document.getElementById("reset-btn").addEventListener("click", resetAll);
+
+  // Logistics sliders
+  document.getElementById("port-distance").addEventListener("input", (e) => {
+    state.port_distance_km = parseInt(e.target.value);
+    document.getElementById("out-port").textContent = state.port_distance_km + " km";
+    recompute();
+  });
+  document.getElementById("acopio-distance").addEventListener("input", (e) => {
+    state.acopio_distance_km = parseInt(e.target.value);
+    document.getElementById("out-acopio").textContent = state.acopio_distance_km + " km";
+    recompute();
+  });
+  document.getElementById("tarifa-flete").addEventListener("input", (e) => {
+    state.tarifa_usd_t_km = parseFloat(e.target.value);
+    document.getElementById("out-tarifa").textContent = state.tarifa_usd_t_km.toFixed(3) + " USD/t/km";
+    recompute();
+  });
+
+  // Retentions
+  ["soja", "maiz", "trigo"].forEach(k => {
+    document.getElementById(`ret-${k}`).addEventListener("input", (e) => {
+      const v = parseInt(e.target.value);
+      state.crops[k].retention = v;
+      document.getElementById(`out-ret-${k}`).textContent = v + "%";
+      recompute();
+    });
+  });
+
+  // Comercializacion
+  document.getElementById("comerc").addEventListener("input", (e) => {
+    state.comercializacion_pct = parseFloat(e.target.value);
+    document.getElementById("out-comerc").textContent = state.comercializacion_pct.toFixed(1) + "%";
+    recompute();
+  });
+
+  // Tenencia
+  document.getElementById("tenencia-model").addEventListener("change", (e) => {
+    state.tenencia_model = e.target.value;
+    updateTenenciaUI();
+    recompute();
+  });
+  document.getElementById("tenencia-value").addEventListener("input", (e) => {
+    state.tenencia_value = parseFloat(e.target.value);
+    const model = state.tenencia_model;
+    const out = document.getElementById("out-tenencia");
+    if (model === "qq") out.textContent = state.tenencia_value + " qq";
+    else if (model === "pct") out.textContent = state.tenencia_value + "%";
+    else if (model === "usd") out.textContent = "$" + state.tenencia_value;
+    recompute();
+  });
+  // Estab selector
+  document.getElementById("estab-select").addEventListener("change", (e) => {
+    switchEstab(e.target.value);
+  });
+}
+
+// ============================================
+// INIT
+// ============================================
+window.addEventListener("DOMContentLoaded", () => {
+  initMap();
+  renderEstabInfo();
+  renderCropsSummary();
+  renderCropEditors();
+  bindEvents();
+  recompute();
+});
+</script>
+
+</body>
+</html>
